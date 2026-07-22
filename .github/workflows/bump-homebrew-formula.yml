@@ -1,0 +1,22 @@
+name: Bump Homebrew formula
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  homebrew:
+    name: Bump Homebrew formula
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mislav/bump-homebrew-formula-action@v4
+        with:
+          formula-name: brew-automator
+          homebrew-tap: xtruhlar/homebrew-brew-automator
+          download-url: https://github.com/xtruhlar/brew-automator/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz
+          commit-message: |
+            chore: bump to {{version}}
+
+            Automated update via GitHub Actions.
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
