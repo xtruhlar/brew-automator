@@ -13,32 +13,48 @@ def cmd_init(_args):
 
 
 def cmd_run(_args):
-    """Handler for `brew-automator run`: run maintenance, email the report,
-    and show a local notification.
+    """Handler for `brew-automator run`: run maintenance, email the report if
+    SMTP is configured, and always show a local notification.
+
+    SMTP config is optional: if it was never set up (no config.env), this
+    runs in local-only mode and just skips the email step. A config.env that
+    exists but is malformed is treated as a real error, since that means
+    setup was attempted and something is actually broken.
     """
-    try:
-        cfg = config.load_config()
-    except (FileNotFoundError, ValueError) as e:
-        print(str(e), file=sys.stderr)
-        sys.exit(1)
+    cfg = None
+    if config.config_exists():
+        try:
+            cfg = config.load_config()
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            sys.exit(1)
+    else:
+        print(
+            "No SMTP config found - running locally only (no email will be sent). "
+            "Run 'brew-automator init' to enable email reports.",
+            file=sys.stderr,
+        )
 
     result = maintenance.run_maintenance()
     previous_state = state.load_state()
 
     date_str = datetime.now().strftime("%Y-%m-%d")
     warning_key = None
-    skip_email = False
+    skip_reason = None
 
     if result["has_problem"]:
         subject = f"⚠️ Homebrew Warning - {date_str}"
         warning_key = state.warning_signature(result["doctor_output"], result["missing_output"])
         if previous_state.get("last_warning_key") == warning_key:
-            skip_email = True
+            skip_reason = "Warning unchanged since last run - skipping email"
     else:
         subject = f"🍺 Homebrew OK - {date_str}"
 
-    if skip_email:
-        maintenance.log("Warning unchanged since last run - skipping email")
+    if cfg is None:
+        skip_reason = skip_reason or "No SMTP config - skipping email (local-only run)"
+
+    if skip_reason:
+        maintenance.log(skip_reason)
     else:
         try:
             mailer.send_report(cfg, subject, result["report"])

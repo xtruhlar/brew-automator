@@ -10,7 +10,7 @@ A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, 
 - macOS (uses `launchd` for scheduling and `osascript` for notifications)
 - Python 3.9+ (standard library only, no external dependencies)
 - [Homebrew](https://brew.sh)
-- An SMTP account to send reports from (any provider)
+- An SMTP account to send reports from (any provider) — optional, see [Setup](#setup)
 
 ## Installation
 
@@ -34,6 +34,8 @@ brew-automator init
 ```
 
 Interactively asks for your SMTP credentials (host, port, user, password, destination address) and stores them in `~/.config/brew-automator/config.env` (chmod 600). This file is never published or committed — it lives outside the repository.
+
+This step is optional. Without it, `brew-automator run` still runs the full maintenance routine and shows a macOS notification — it just skips the email step (and says so).
 
 ## Running manually
 
