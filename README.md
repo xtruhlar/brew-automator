@@ -92,6 +92,16 @@ would just be noise.
 - `~/.config/brew-automator/report.txt` — the most recently generated report
 - `~/.config/brew-automator/state.json` — signature of the last reported warning (see below)
 
+## Releasing
+
+```
+scripts/release.sh 0.9.0
+```
+
+Bumps `__version__`, commits, tags, pushes, and publishes a GitHub release in one step —
+version is never hand-edited separately from the tag. The Homebrew tap formula then
+updates itself automatically via [.github/workflows/bump-homebrew-formula.yml](.github/workflows/bump-homebrew-formula.yml).
+
 ## Development
 
 ```
