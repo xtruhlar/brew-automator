@@ -1,10 +1,10 @@
-"""Command-line entry point for brew-automator (init/run subcommands)."""
+"""Command-line entry point for brew-automator (init/run/schedule subcommands)."""
 
 import argparse
 import sys
 from datetime import datetime
 
-from brew_automator import config, mailer, maintenance
+from brew_automator import config, mailer, maintenance, scheduler
 
 
 def cmd_init(_args):
@@ -40,6 +40,21 @@ def cmd_run(_args):
     maintenance.notify_local(summary)
 
 
+def cmd_schedule_install(_args):
+    """Handler for `brew-automator schedule install`."""
+    scheduler.install_schedule()
+
+
+def cmd_schedule_remove(_args):
+    """Handler for `brew-automator schedule remove`."""
+    scheduler.remove_schedule()
+
+
+def cmd_schedule_status(_args):
+    """Handler for `brew-automator schedule status`."""
+    scheduler.show_status()
+
+
 def main():
     """Parse CLI arguments and dispatch to the matching subcommand handler."""
     parser = argparse.ArgumentParser(prog="brew-automator", description="Homebrew maintenance automation")
@@ -50,6 +65,22 @@ def main():
 
     run_parser = subparsers.add_parser("run", help="Run brew maintenance and send a report")
     run_parser.set_defaults(func=cmd_run)
+
+    schedule_parser = subparsers.add_parser("schedule", help="Manage the launchd schedule for automatic runs")
+    schedule_subparsers = schedule_parser.add_subparsers(dest="schedule_command", required=True)
+
+    schedule_install_parser = schedule_subparsers.add_parser(
+        "install", help="Interactively pick days/times and install the schedule"
+    )
+    schedule_install_parser.set_defaults(func=cmd_schedule_install)
+
+    schedule_remove_parser = schedule_subparsers.add_parser("remove", help="Remove the installed schedule")
+    schedule_remove_parser.set_defaults(func=cmd_schedule_remove)
+
+    schedule_status_parser = schedule_subparsers.add_parser(
+        "status", help="Show whether the schedule is installed and loaded"
+    )
+    schedule_status_parser.set_defaults(func=cmd_schedule_status)
 
     args = parser.parse_args()
     args.func(args)

@@ -37,85 +37,28 @@ The report is written to `~/.config/brew-automator/report.txt`, and the run log 
 
 ## Scheduled runs (launchd)
 
-Create `~/Library/LaunchAgents/com.brewautomator.maintenance.plist`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.brewautomator.maintenance</string>
-
-    <key>ProgramArguments</key>
-    <array>
-        <string>/opt/homebrew/bin/brew-automator</string>
-        <string>run</string>
-    </array>
-
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-    </dict>
-
-    <key>StartCalendarInterval</key>
-    <array>
-        <dict>
-            <key>Weekday</key>
-            <integer>0</integer>
-            <key>Hour</key>
-            <integer>20</integer>
-            <key>Minute</key>
-            <integer>0</integer>
-        </dict>
-        <dict>
-            <key>Weekday</key>
-            <integer>3</integer>
-            <key>Hour</key>
-            <integer>8</integer>
-            <key>Minute</key>
-            <integer>0</integer>
-        </dict>
-    </array>
-
-    <key>StandardOutPath</key>
-    <string>/Users/YOUR_USERNAME/.config/brew-automator/logs/launchd.out.log</string>
-
-    <key>StandardErrorPath</key>
-    <string>/Users/YOUR_USERNAME/.config/brew-automator/logs/launchd.err.log</string>
-</dict>
-</plist>
+```
+brew-automator schedule install
 ```
 
-`Weekday`: 0 = Sunday, 1 = Monday, ... 6 = Saturday. Adjust the schedule and replace `YOUR_USERNAME` to taste.
+Interactively pick one or more weekdays and times, then it generates and loads a launchd
+LaunchAgent (`~/Library/LaunchAgents/com.brewautomator.maintenance.plist`) that runs
+`brew-automator run` on that schedule. Re-running `install` replaces the existing schedule.
 
-The `EnvironmentVariables`/`PATH` entry matters: launchd runs jobs with a minimal `PATH` that doesn't include Homebrew's bin directories, which otherwise breaks `brew` discovery and makes `brew doctor` report bogus PATH warnings.
-
-**Load (activate) the schedule:**
 ```
-launchctl load ~/Library/LaunchAgents/com.brewautomator.maintenance.plist
-```
-
-**Check that it's registered / running:**
-```
-launchctl list | grep com.brewautomator.maintenance
+brew-automator schedule status   # check whether it's installed and loaded
+brew-automator schedule remove   # unload and delete it
 ```
 
-**Unload (deactivate) the schedule:**
-```
-launchctl unload ~/Library/LaunchAgents/com.brewautomator.maintenance.plist
-```
+Under the hood this handles the two gotchas that otherwise bite you with a hand-written
+plist: pointing `ProgramArguments` at the actual installed binary, and setting `PATH` in
+`EnvironmentVariables` (launchd's default `PATH` doesn't include Homebrew's bin
+directories, which breaks `brew` discovery and makes `brew doctor` report bogus PATH
+warnings).
 
-**Trigger it manually via launchd right now (without waiting for the schedule):**
+You can still trigger a scheduled run manually without waiting for its time:
 ```
 launchctl start com.brewautomator.maintenance
-```
-
-**Remove it entirely:**
-```
-launchctl unload ~/Library/LaunchAgents/com.brewautomator.maintenance.plist
-rm ~/Library/LaunchAgents/com.brewautomator.maintenance.plist
 ```
 
 ## Logs
