@@ -4,6 +4,7 @@ Also handles local logging (~/.config/brew-automator/logs) and the
 macOS notification shown after each run.
 """
 
+import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -14,15 +15,32 @@ REPORT_FILE = STATE_DIR / "report.txt"
 LOG_FILE = LOG_DIR / "brew-maintenance.log"
 
 
+def _find_brew() -> str:
+    """Locate the brew executable. launchd runs jobs with a minimal PATH that
+    doesn't include /opt/homebrew/bin or /usr/local/bin, so `brew` alone isn't
+    reliably found when triggered by a scheduled launchd job.
+    """
+    brew = shutil.which("brew")
+    if brew:
+        return brew
+    for candidate in ("/opt/homebrew/bin/brew", "/usr/local/bin/brew"):
+        if Path(candidate).exists():
+            return candidate
+    return "brew"
+
+
+BREW = _find_brew()
+
+
 def _run(*args: str) -> str:
-    """Run a command and return its combined stdout+stderr, ignoring the exit code."""
-    result = subprocess.run(args, capture_output=True, text=True)
+    """Run a brew subcommand and return its combined stdout+stderr, ignoring the exit code."""
+    result = subprocess.run([BREW, *args], capture_output=True, text=True)
     return (result.stdout + result.stderr).strip()
 
 
 def _run_with_exit(*args: str):
     """Like _run, but also return the exit code (used for brew doctor's status)."""
-    result = subprocess.run(args, capture_output=True, text=True)
+    result = subprocess.run([BREW, *args], capture_output=True, text=True)
     return (result.stdout + result.stderr).strip(), result.returncode
 
 
@@ -41,12 +59,12 @@ def run_maintenance() -> dict:
     """
     _log("Starting brew maintenance run")
 
-    update_output = _run("brew", "update")
-    outdated_output = _run("brew", "outdated")
-    upgrade_output = _run("brew", "upgrade")
-    cleanup_output = _run("brew", "cleanup")
-    doctor_output, doctor_exit = _run_with_exit("brew", "doctor")
-    missing_output = _run("brew", "missing")
+    update_output = _run("update")
+    outdated_output = _run("outdated")
+    upgrade_output = _run("upgrade")
+    cleanup_output = _run("cleanup")
+    doctor_output, doctor_exit = _run_with_exit("doctor")
+    missing_output = _run("missing")
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     report = (
