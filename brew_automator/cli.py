@@ -68,7 +68,11 @@ def cmd_run(_args):
 
     summary = result["outdated"].replace("\n", ", ").strip(", ") or "Nothing to update"
     maintenance.notify_local(summary)
-    print(f"→ Report saved to {maintenance.REPORT_FILE}")
+
+    separator = "-" * 40
+    print(f"________{maintenance.REPORT_FILE.name}__________")
+    print(result["report"])
+    print(separator)
 
 
 def cmd_schedule_install(_args):
