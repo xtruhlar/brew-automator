@@ -1,6 +1,16 @@
 # brew-automator
 
+[![CI](https://github.com/xtruhlar/brew-automator/actions/workflows/ci.yml/badge.svg)](https://github.com/xtruhlar/brew-automator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, `cleanup`, `doctor`, `missing`) that sends an email report via SMTP after every run (subject line differs depending on whether everything is OK or a problem was found), plus a local macOS notification.
+
+## Requirements
+
+- macOS (uses `launchd` for scheduling and `osascript` for notifications)
+- Python 3.9+ (standard library only, no external dependencies)
+- [Homebrew](https://brew.sh)
+- An SMTP account to send reports from (any provider)
 
 ## Installation
 
@@ -67,6 +77,14 @@ launchctl start com.brewautomator.maintenance
 - `~/.config/brew-automator/logs/launchd.out.log` / `launchd.err.log` — launchd stdout/stderr (e.g. startup errors)
 - `~/.config/brew-automator/report.txt` — the most recently generated report
 - `~/.config/brew-automator/state.json` — signature of the last reported warning (see below)
+
+## Development
+
+```
+python3 -m unittest discover -s tests -v
+```
+
+Tests run in CI on every push/PR via GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Warning deduplication
 

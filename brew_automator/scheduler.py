@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from xml.sax.saxutils import escape as xml_escape
 
 LAUNCH_AGENTS_DIR = Path.home() / "Library" / "LaunchAgents"
 PLIST_LABEL = "com.brewautomator.maintenance"
@@ -81,18 +82,18 @@ def _build_plist(entries: list, brew_automator_path: str) -> str:
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>{PLIST_LABEL}</string>
+    <string>{xml_escape(PLIST_LABEL)}</string>
 
     <key>ProgramArguments</key>
     <array>
-        <string>{brew_automator_path}</string>
+        <string>{xml_escape(brew_automator_path)}</string>
         <string>run</string>
     </array>
 
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>{LAUNCHD_PATH}</string>
+        <string>{xml_escape(LAUNCHD_PATH)}</string>
     </dict>
 
     <key>StartCalendarInterval</key>
@@ -101,10 +102,10 @@ def _build_plist(entries: list, brew_automator_path: str) -> str:
     </array>
 
     <key>StandardOutPath</key>
-    <string>{LOG_DIR / "launchd.out.log"}</string>
+    <string>{xml_escape(str(LOG_DIR / "launchd.out.log"))}</string>
 
     <key>StandardErrorPath</key>
-    <string>{LOG_DIR / "launchd.err.log"}</string>
+    <string>{xml_escape(str(LOG_DIR / "launchd.err.log"))}</string>
 </dict>
 </plist>
 """
@@ -122,7 +123,10 @@ def install_schedule():
         subprocess.run(["launchctl", "unload", str(PLIST_FILE)], capture_output=True)
 
     PLIST_FILE.write_text(_build_plist(entries, brew_automator_path))
-    subprocess.run(["launchctl", "load", str(PLIST_FILE)], check=True)
+    result = subprocess.run(["launchctl", "load", str(PLIST_FILE)], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Failed to load schedule via launchctl: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
 
     print(f"\nInstalled schedule ({PLIST_FILE}):")
     for weekday, hour, minute in entries:

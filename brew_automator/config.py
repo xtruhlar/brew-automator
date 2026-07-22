@@ -52,13 +52,17 @@ def run_init():
     mail_to = input("Address to send reports to: ").strip()
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE.write_text(
+    contents = (
         f"SMTP_HOST={smtp_host}\n"
         f"SMTP_PORT={smtp_port}\n"
         f"SMTP_USER={smtp_user}\n"
         f"SMTP_PASSWORD={smtp_password}\n"
         f"MAIL_TO={mail_to}\n"
     )
-    os.chmod(CONFIG_FILE, 0o600)
+    # Create with 0600 from the start (instead of chmod after write_text) so the
+    # password is never briefly readable under the umask's default permissions.
+    fd = os.open(CONFIG_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(contents)
 
     print(f"\nSaved to {CONFIG_FILE} (chmod 600).")

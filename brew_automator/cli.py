@@ -95,7 +95,11 @@ def main():
     schedule_status_parser.set_defaults(func=cmd_schedule_status)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except (EOFError, KeyboardInterrupt):
+        print("\nAborted.", file=sys.stderr)
+        sys.exit(130)
 
 
 if __name__ == "__main__":
