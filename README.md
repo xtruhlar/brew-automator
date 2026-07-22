@@ -49,6 +49,8 @@ brew-automator run
 
 The report is written to `~/.config/brew-automator/report.txt`, and the run log to `~/.config/brew-automator/logs/brew-maintenance.log`.
 
+<img src="assets/demo.gif" alt="demo">
+
 ## Scheduled runs (launchd)
 
 ```
