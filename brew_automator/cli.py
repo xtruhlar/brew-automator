@@ -55,7 +55,9 @@ def cmd_run(_args):
 
     if skip_reason:
         maintenance.log(skip_reason)
+        print(f"→ {skip_reason}")
     else:
+        print("→ Sending email report")
         try:
             mailer.send_report(cfg, subject, result["report"])
         except Exception as e:
@@ -66,6 +68,7 @@ def cmd_run(_args):
 
     summary = result["outdated"].replace("\n", ", ").strip(", ") or "Nothing to update"
     maintenance.notify_local(summary)
+    print(f"→ Report saved to {maintenance.REPORT_FILE}")
 
 
 def cmd_schedule_install(_args):

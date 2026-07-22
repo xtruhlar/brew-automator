@@ -67,12 +67,25 @@ def run_maintenance() -> dict:
     """
     log("Starting brew maintenance run")
 
+    print("→ brew update")
     update_output = _run("update")
+
+    print("→ brew outdated (formulae)")
     outdated_formula_output = _run("outdated", "--formula")
+
+    print("→ brew outdated (casks)")
     outdated_cask_output = _run("outdated", "--cask", "--greedy-latest")
+
+    print("→ brew upgrade")
     upgrade_output = _run("upgrade")
+
+    print("→ brew cleanup")
     cleanup_output = _run("cleanup")
+
+    print("→ brew doctor")
     doctor_output, doctor_exit = _run_with_exit("doctor")
+
+    print("→ brew missing")
     missing_output = _run("missing")
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -92,6 +105,7 @@ def run_maintenance() -> dict:
 
     has_problem = doctor_exit != 0 or bool(missing_output)
     log(f"Finished brew maintenance run (problem={has_problem})")
+    print(f"→ Done ({'problem detected' if has_problem else 'all OK'})")
 
     outdated_summary = "\n".join(
         part for part in (outdated_formula_output, outdated_cask_output) if part
