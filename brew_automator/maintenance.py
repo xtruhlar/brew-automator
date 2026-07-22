@@ -14,6 +14,9 @@ LOG_DIR = STATE_DIR / "logs"
 REPORT_FILE = STATE_DIR / "report.txt"
 LOG_FILE = LOG_DIR / "brew-maintenance.log"
 
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+ICON_FILE = PACKAGE_ROOT / "assets" / "beer-icon.png"
+
 
 def _find_brew() -> str:
     """Locate the brew executable. launchd runs jobs with a minimal PATH that
@@ -93,9 +96,22 @@ def run_maintenance() -> dict:
 
 
 def notify_local(summary: str, title: str = "🍺 Homebrew"):
-    """Show a macOS notification via osascript. Quotes/backslashes are escaped
-    since `summary` is interpolated into an AppleScript string literal.
+    """Show a macOS notification with a custom beer icon via terminal-notifier,
+    falling back to plain osascript (generic icon, no customization) if
+    terminal-notifier isn't installed.
     """
+    terminal_notifier = shutil.which("terminal-notifier")
+    if terminal_notifier and ICON_FILE.exists():
+        subprocess.run(
+            [
+                terminal_notifier,
+                "-title", title,
+                "-message", summary,
+                "-appIcon", str(ICON_FILE),
+            ]
+        )
+        return
+
     escaped_summary = summary.replace("\\", "\\\\").replace('"', '\\"')
     escaped_title = title.replace("\\", "\\\\").replace('"', '\\"')
     subprocess.run(

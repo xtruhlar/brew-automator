@@ -7,7 +7,8 @@ A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, 
 
 ## Requirements
 
-- macOS (uses `launchd` for scheduling and `osascript` for notifications)
+- macOS (uses `launchd` for scheduling)
+- [terminal-notifier](https://github.com/julienXX/terminal-notifier) for notifications with a custom icon (installed automatically as a Homebrew dependency; falls back to plain `osascript` notifications if it's missing)
 - Python 3.9+ (standard library only, no external dependencies)
 - [Homebrew](https://brew.sh)
 - An SMTP account to send reports from (any provider) — optional, see [Setup](#setup)
