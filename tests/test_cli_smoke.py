@@ -28,6 +28,11 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("remove", result.stdout)
         self.assertIn("status", result.stdout)
 
+    def test_version_exits_zero(self):
+        result = run("--version")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("brew-automator", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

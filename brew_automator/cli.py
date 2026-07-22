@@ -4,7 +4,7 @@ import argparse
 import sys
 from datetime import datetime
 
-from brew_automator import config, mailer, maintenance, scheduler, state
+from brew_automator import __version__, config, mailer, maintenance, scheduler, state
 
 
 def cmd_init(_args):
@@ -86,6 +86,7 @@ def cmd_schedule_status(_args):
 def main():
     """Parse CLI arguments and dispatch to the matching subcommand handler."""
     parser = argparse.ArgumentParser(prog="brew-automator", description="Homebrew maintenance automation")
+    parser.add_argument("--version", action="version", version=f"brew-automator {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="Interactively set up SMTP config")
