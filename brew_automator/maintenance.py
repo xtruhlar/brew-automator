@@ -56,11 +56,20 @@ def run_maintenance() -> dict:
     """Run update/outdated/upgrade/cleanup/doctor/missing, write the report file,
     and return a dict with the report text, the outdated-package summary, and
     whether a problem was detected (non-zero `brew doctor` or `brew missing` output).
+
+    `brew upgrade` and `brew cleanup` already cover both formulae and casks by
+    default, but `brew outdated` is reported separately for each (with
+    `--greedy-latest` for casks, since version :latest casks otherwise aren't
+    flagged as outdated) so the report clearly shows what's stale on each side.
+    `--greedy-latest` deliberately skips auto_updates-true casks (e.g. browsers
+    that update themselves) - those would just be noise here since brew isn't
+    managing their updates anyway.
     """
     log("Starting brew maintenance run")
 
     update_output = _run("update")
-    outdated_output = _run("outdated")
+    outdated_formula_output = _run("outdated", "--formula")
+    outdated_cask_output = _run("outdated", "--cask", "--greedy-latest")
     upgrade_output = _run("upgrade")
     cleanup_output = _run("cleanup")
     doctor_output, doctor_exit = _run_with_exit("doctor")
@@ -70,7 +79,8 @@ def run_maintenance() -> dict:
     report = (
         f"Homebrew maintenance report - {timestamp}\n\n"
         f"== brew update ==\n{update_output}\n\n"
-        f"== brew outdated (before upgrade) ==\n{outdated_output}\n\n"
+        f"== brew outdated — Formulae (before upgrade) ==\n{outdated_formula_output}\n\n"
+        f"== brew outdated — Casks (before upgrade, --greedy-latest) ==\n{outdated_cask_output}\n\n"
         f"== brew upgrade ==\n{upgrade_output}\n\n"
         f"== brew cleanup ==\n{cleanup_output}\n\n"
         f"== brew doctor ==\n{doctor_output}\n\n"
@@ -83,9 +93,13 @@ def run_maintenance() -> dict:
     has_problem = doctor_exit != 0 or bool(missing_output)
     log(f"Finished brew maintenance run (problem={has_problem})")
 
+    outdated_summary = "\n".join(
+        part for part in (outdated_formula_output, outdated_cask_output) if part
+    )
+
     return {
         "report": report,
-        "outdated": outdated_output,
+        "outdated": outdated_summary,
         "has_problem": has_problem,
         "doctor_output": doctor_output,
         "missing_output": missing_output,
