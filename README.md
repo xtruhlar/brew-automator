@@ -66,7 +66,13 @@ launchctl start com.brewautomator.maintenance
 - `~/.config/brew-automator/logs/brew-maintenance.log` — per-run progress log (internal logging)
 - `~/.config/brew-automator/logs/launchd.out.log` / `launchd.err.log` — launchd stdout/stderr (e.g. startup errors)
 - `~/.config/brew-automator/report.txt` — the most recently generated report
+- `~/.config/brew-automator/state.json` — signature of the last reported warning (see below)
 
-## TODO
+## Warning deduplication
 
-- State file to deduplicate repeated warnings
+Every run sends a `🍺 Homebrew OK` email when there's no problem, so you always know the
+job actually ran. When `brew doctor` or `brew missing` reports a problem, the warning
+content is hashed and compared against `state.json`. If it's the same problem as last
+time, the `⚠️ Homebrew Warning` email is skipped (logged instead) so you don't get
+re-alerted for something you're already aware of — a *new or changed* warning still
+emails you.

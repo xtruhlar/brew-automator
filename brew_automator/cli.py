@@ -4,7 +4,7 @@ import argparse
 import sys
 from datetime import datetime
 
-from brew_automator import config, mailer, maintenance, scheduler
+from brew_automator import config, mailer, maintenance, scheduler, state
 
 
 def cmd_init(_args):
@@ -23,18 +23,30 @@ def cmd_run(_args):
         sys.exit(1)
 
     result = maintenance.run_maintenance()
+    previous_state = state.load_state()
 
     date_str = datetime.now().strftime("%Y-%m-%d")
+    warning_key = None
+    skip_email = False
+
     if result["has_problem"]:
         subject = f"⚠️ Homebrew Warning - {date_str}"
+        warning_key = state.warning_signature(result["doctor_output"], result["missing_output"])
+        if previous_state.get("last_warning_key") == warning_key:
+            skip_email = True
     else:
         subject = f"🍺 Homebrew OK - {date_str}"
 
-    try:
-        mailer.send_report(cfg, subject, result["report"])
-    except Exception as e:
-        print(f"Failed to send email: {e}", file=sys.stderr)
-        sys.exit(1)
+    if skip_email:
+        maintenance.log("Warning unchanged since last run - skipping email")
+    else:
+        try:
+            mailer.send_report(cfg, subject, result["report"])
+        except Exception as e:
+            print(f"Failed to send email: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    state.save_state({"last_warning_key": warning_key, "last_run": date_str})
 
     summary = result["outdated"].replace("\n", ", ").strip(", ") or "Nothing to update"
     maintenance.notify_local(summary)

@@ -44,7 +44,7 @@ def _run_with_exit(*args: str):
     return (result.stdout + result.stderr).strip(), result.returncode
 
 
-def _log(message: str):
+def log(message: str):
     """Append a timestamped line to the maintenance log."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -57,7 +57,7 @@ def run_maintenance() -> dict:
     and return a dict with the report text, the outdated-package summary, and
     whether a problem was detected (non-zero `brew doctor` or `brew missing` output).
     """
-    _log("Starting brew maintenance run")
+    log("Starting brew maintenance run")
 
     update_output = _run("update")
     outdated_output = _run("outdated")
@@ -81,12 +81,14 @@ def run_maintenance() -> dict:
     REPORT_FILE.write_text(report)
 
     has_problem = doctor_exit != 0 or bool(missing_output)
-    _log(f"Finished brew maintenance run (problem={has_problem})")
+    log(f"Finished brew maintenance run (problem={has_problem})")
 
     return {
         "report": report,
         "outdated": outdated_output,
         "has_problem": has_problem,
+        "doctor_output": doctor_output,
+        "missing_output": missing_output,
     }
 
 
