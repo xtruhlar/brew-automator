@@ -3,7 +3,7 @@
 [![CI](https://github.com/xtruhlar/brew-automator/actions/workflows/ci.yml/badge.svg)](https://github.com/xtruhlar/brew-automator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, `cleanup`, `doctor`, `missing`) that sends an email report via SMTP after every run (subject line differs depending on whether everything is OK or a problem was found), plus a local macOS notification.
+A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, `cleanup`, `doctor`, `missing`) that sends an email report via SMTP after every run (subject line differs depending on whether everything is OK or a problem was found), plus a local macOS notification. Covers both formulae and casks.
 
 <img src="assets/thumbnail.png" alt="thumbnail">
 
@@ -74,6 +74,14 @@ You can still trigger a scheduled run manually without waiting for its time:
 ```
 launchctl start com.brewautomator.maintenance
 ```
+
+## Formulae and casks
+
+`brew upgrade` and `brew cleanup` already cover both formulae and installed casks by
+default, so both get upgraded and cleaned up in every run. The report shows outdated
+formulae and outdated casks in separate sections; the cask check uses `--greedy`, since
+casks pinned to a version like `latest` otherwise never get flagged as outdated even when
+a newer release exists.
 
 ## Logs
 
