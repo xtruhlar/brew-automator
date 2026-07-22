@@ -5,7 +5,7 @@
 
 A CLI tool for automated Homebrew maintenance (`update`, `outdated`, `upgrade`, `cleanup`, `doctor`, `missing`) that sends an email report via SMTP after every run (subject line differs depending on whether everything is OK or a problem was found), plus a local macOS notification.
 
-<img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*IgoFvOYeBDFqmQSF3Wh9Sg.png" alt="thumbnail">
+<img src="assets/thumbnail.png" alt="thumbnail">
 
 ## Requirements
 
