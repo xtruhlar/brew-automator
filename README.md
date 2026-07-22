@@ -79,9 +79,11 @@ launchctl start com.brewautomator.maintenance
 
 `brew upgrade` and `brew cleanup` already cover both formulae and installed casks by
 default, so both get upgraded and cleaned up in every run. The report shows outdated
-formulae and outdated casks in separate sections; the cask check uses `--greedy`, since
-casks pinned to a version like `latest` otherwise never get flagged as outdated even when
-a newer release exists.
+formulae and outdated casks in separate sections; the cask check uses `--greedy-latest`,
+since casks pinned to a version like `latest` otherwise never get flagged as outdated even
+when a newer release exists. This deliberately skips `auto_updates`-true casks (browsers
+and similar apps that update themselves) — brew isn't managing those, so flagging them
+would just be noise.
 
 ## Logs
 

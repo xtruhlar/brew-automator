@@ -41,7 +41,7 @@ class RunMaintenanceTests(unittest.TestCase):
         def fake_run(*args):
             if args == ("outdated", "--formula"):
                 return formula_outdated
-            if args == ("outdated", "--cask", "--greedy"):
+            if args == ("outdated", "--cask", "--greedy-latest"):
                 return cask_outdated
             return ""
 
