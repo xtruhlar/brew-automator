@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from brew_automator import maintenance
+from brew_automator import ignorelist, maintenance
 
 
 class RunMaintenanceTests(unittest.TestCase):
@@ -25,7 +25,10 @@ class RunMaintenanceTests(unittest.TestCase):
 
         self.original_run = maintenance._run
         self.original_run_with_exit = maintenance._run_with_exit
+        self.original_load_ignored = ignorelist.load_ignored
         self.addCleanup(self._restore_run_fns)
+
+        self.upgrade_calls = []
 
     def _restore_paths(self):
         maintenance.STATE_DIR = self.original_state_dir
@@ -36,13 +39,24 @@ class RunMaintenanceTests(unittest.TestCase):
     def _restore_run_fns(self):
         maintenance._run = self.original_run
         maintenance._run_with_exit = self.original_run_with_exit
+        ignorelist.load_ignored = self.original_load_ignored
 
-    def _fake_brew(self, formula_outdated="", cask_outdated=""):
+    def _fake_brew(self, formula_outdated="", cask_outdated="", ignored=None):
+        formula_names = "\n".join(line.split()[0] for line in formula_outdated.splitlines() if line)
+        cask_names = "\n".join(line.split()[0] for line in cask_outdated.splitlines() if line)
+
         def fake_run(*args):
             if args == ("outdated", "--formula"):
                 return formula_outdated
+            if args == ("outdated", "--formula", "--quiet"):
+                return formula_names
             if args == ("outdated", "--cask", "--greedy-latest"):
                 return cask_outdated
+            if args == ("outdated", "--cask", "--greedy-latest", "--quiet"):
+                return cask_names
+            if args and args[0] == "upgrade":
+                self.upgrade_calls.append(args)
+                return f"Upgraded: {' '.join(args[2:])}"
             return ""
 
         def fake_run_with_exit(*args):
@@ -50,6 +64,7 @@ class RunMaintenanceTests(unittest.TestCase):
 
         maintenance._run = fake_run
         maintenance._run_with_exit = fake_run_with_exit
+        ignorelist.load_ignored = lambda: ignored or {"formulae": [], "casks": []}
 
     def test_report_has_separate_formula_and_cask_sections(self):
         self._fake_brew(formula_outdated="git 2.40 -> 2.50", cask_outdated="firefox 1.0 -> 2.0")
@@ -69,6 +84,30 @@ class RunMaintenanceTests(unittest.TestCase):
         self._fake_brew(formula_outdated="", cask_outdated="")
         result = maintenance.run_maintenance()
         self.assertEqual(result["outdated"], "")
+
+    def test_ignored_formula_is_excluded_from_upgrade(self):
+        self._fake_brew(
+            formula_outdated="git 2.40 -> 2.50\nnode 20.0 -> 21.0",
+            ignored={"formulae": ["git"], "casks": []},
+        )
+        maintenance.run_maintenance()
+        upgraded_names = " ".join(" ".join(call) for call in self.upgrade_calls)
+        self.assertNotIn("git", upgraded_names)
+        self.assertIn("node", upgraded_names)
+
+    def test_ignored_formula_listed_as_skipped_in_report(self):
+        self._fake_brew(
+            formula_outdated="git 2.40 -> 2.50",
+            ignored={"formulae": ["git"], "casks": []},
+        )
+        result = maintenance.run_maintenance()
+        self.assertIn("== Skipped (excluded via 'brew-automator settings') ==", result["report"])
+        self.assertIn("Formulae: git", result["report"])
+
+    def test_no_upgrade_call_when_nothing_outdated(self):
+        self._fake_brew(formula_outdated="", cask_outdated="")
+        maintenance.run_maintenance()
+        self.assertEqual(self.upgrade_calls, [])
 
 
 if __name__ == "__main__":

@@ -87,6 +87,19 @@ when a newer release exists. This deliberately skips `auto_updates`-true casks (
 and similar apps that update themselves) — brew isn't managing those, so flagging them
 would just be noise.
 
+## Excluding formulae/casks from upgrades
+
+```
+brew-automator settings
+```
+
+Interactively lists every installed formula and cask (↑/↓ to move, space to toggle, enter
+to save). Anything you select is excluded from `brew upgrade` on future `run`s — it still
+shows up in the outdated section of the report so you know it's out of date, it just won't
+get auto-upgraded. Useful for pinning something you're intentionally holding back.
+
+The exclusion list is stored in `~/.config/brew-automator/ignored.json`.
+
 ## Logs
 
 - `~/.config/brew-automator/logs/brew-maintenance.log` — per-run progress log (internal logging)

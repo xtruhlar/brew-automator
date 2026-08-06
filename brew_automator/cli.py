@@ -4,7 +4,7 @@ import argparse
 import sys
 from datetime import datetime
 
-from brew_automator import __version__, config, mailer, maintenance, scheduler, state
+from brew_automator import __version__, config, mailer, maintenance, scheduler, settings_ui, state
 
 
 def cmd_init(_args):
@@ -75,6 +75,11 @@ def cmd_run(_args):
     print(separator)
 
 
+def cmd_settings(_args):
+    """Handler for `brew-automator settings`."""
+    settings_ui.run_settings()
+
+
 def cmd_schedule_install(_args):
     """Handler for `brew-automator schedule install`."""
     scheduler.install_schedule()
@@ -101,6 +106,11 @@ def main():
 
     run_parser = subparsers.add_parser("run", help="Run brew maintenance and send a report")
     run_parser.set_defaults(func=cmd_run)
+
+    settings_parser = subparsers.add_parser(
+        "settings", help="Interactively choose formulae/casks to exclude from automatic upgrades"
+    )
+    settings_parser.set_defaults(func=cmd_settings)
 
     schedule_parser = subparsers.add_parser("schedule", help="Manage the launchd schedule for automatic runs")
     schedule_subparsers = schedule_parser.add_subparsers(dest="schedule_command", required=True)
