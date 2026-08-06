@@ -110,12 +110,14 @@ The exclusion list is stored in `~/.config/brew-automator/ignored.json`.
 ## Releasing
 
 ```
-scripts/release.sh 0.9.0
+scripts/release.sh 0.9.0 ["short summary of what's in this release"]
 ```
 
 Bumps `__version__`, commits, tags, pushes, and publishes a GitHub release in one step —
-version is never hand-edited separately from the tag. The Homebrew tap formula then
-updates itself automatically via [.github/workflows/bump-homebrew-formula.yml](.github/workflows/bump-homebrew-formula.yml).
+version is never hand-edited separately from the tag. The optional summary is prepended
+above the auto-generated commit changelog in the release notes, so the release is clear
+at a glance instead of just a raw commit list. The Homebrew tap formula then updates
+itself automatically via [.github/workflows/bump-homebrew-formula.yml](.github/workflows/bump-homebrew-formula.yml).
 
 ## Development
 
