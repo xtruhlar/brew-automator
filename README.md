@@ -100,6 +100,9 @@ get auto-upgraded. Useful for pinning something you're intentionally holding bac
 
 The exclusion list is stored in `~/.config/brew-automator/ignored.json`.
 
+<img width="1092" height="700" alt="image" src="https://github.com/user-attachments/assets/19990c18-0e20-4b13-be98-043106a1aead" />
+
+
 ## Logs
 
 - `~/.config/brew-automator/logs/brew-maintenance.log` — per-run progress log (internal logging)
