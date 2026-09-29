@@ -28,6 +28,20 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("remove", result.stdout)
         self.assertIn("status", result.stdout)
 
+    def test_run_help_lists_modes(self):
+        result = run("run", "--help")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("--dry-run", result.stdout)
+        self.assertIn("--no-upgrade", result.stdout)
+
+    def test_run_modes_are_mutually_exclusive(self):
+        result = run("run", "--dry-run", "--no-upgrade")
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_history_and_status_help(self):
+        self.assertEqual(run("history", "--help").returncode, 0)
+        self.assertEqual(run("status", "--help").returncode, 0)
+
     def test_version_exits_zero(self):
         result = run("--version")
         self.assertEqual(result.returncode, 0)
