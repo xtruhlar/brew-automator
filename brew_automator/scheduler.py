@@ -5,9 +5,11 @@ days/times the user picks, and loads/unloads it via launchctl.
 """
 
 import os
+import plistlib
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 from xml.sax.saxutils import escape as xml_escape
 
@@ -142,6 +144,52 @@ def remove_schedule():
     subprocess.run(["launchctl", "unload", str(PLIST_FILE)], capture_output=True)
     PLIST_FILE.unlink()
     print(f"Removed schedule ({PLIST_FILE}).")
+
+
+def read_entries() -> list:
+    """Return the (weekday, hour, minute) entries from the installed plist,
+    or [] if no schedule is installed or it can't be parsed."""
+    if not PLIST_FILE.exists():
+        return []
+    try:
+        with PLIST_FILE.open("rb") as f:
+            data = plistlib.load(f)
+    except (OSError, plistlib.InvalidFileException, ValueError):
+        return []
+    intervals = data.get("StartCalendarInterval", [])
+    if isinstance(intervals, dict):
+        intervals = [intervals]
+    return [
+        (int(i.get("Weekday", 0)) % 7, int(i.get("Hour", 0)), int(i.get("Minute", 0)))
+        for i in intervals
+    ]
+
+
+def next_run(entries: list, now: datetime):
+    """Return the next datetime (after `now`) matching one of the entries, or None.
+
+    Entries use launchd's weekday numbering (0 = Sunday); Python's
+    datetime.weekday() uses 0 = Monday.
+    """
+    candidates = []
+    for weekday, hour, minute in entries:
+        days_ahead = (((weekday - 1) % 7) - now.weekday()) % 7
+        candidate = (now + timedelta(days=days_ahead)).replace(
+            hour=hour, minute=minute, second=0, microsecond=0
+        )
+        if candidate <= now:
+            candidate += timedelta(days=7)
+        candidates.append(candidate)
+    return min(candidates) if candidates else None
+
+
+def is_loaded() -> bool:
+    """True if launchd currently has the job loaded."""
+    try:
+        result = subprocess.run(["launchctl", "list", PLIST_LABEL], capture_output=True, text=True)
+    except FileNotFoundError:
+        return False
+    return result.returncode == 0
 
 
 def show_status():

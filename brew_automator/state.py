@@ -26,9 +26,13 @@ def save_state(state: dict):
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
-def warning_signature(doctor_output: str, missing_output: str) -> str:
+def warning_signature(doctor_output: str, missing_output: str, extra: str = "") -> str:
     """Hash the warning content, used to tell whether a problem is new or
-    the same one already reported on a previous run.
+    the same one already reported on a previous run. `extra` carries other
+    problem details (e.g. which upgrades failed); when empty the signature is
+    identical to the one earlier versions produced.
     """
     combined = f"{doctor_output}\n{missing_output}"
+    if extra:
+        combined += f"\n{extra}"
     return hashlib.sha256(combined.encode()).hexdigest()
